@@ -1,0 +1,33 @@
+{
+  "generator_version": "1.0",
+  "seed": 20261120,
+  "count": 200,
+  "reference_date": "2026-11-20",
+  "reference_profile": {
+    "id": "DEMO-2026-01",
+    "version": "1.0"
+  },
+  "source": "Полностью синтетические данные",
+  "scenarios": {
+    "paid": 10,
+    "exempt_valid": 10,
+    "underpaid": 10,
+    "exempt_no_proof": 10,
+    "exempt_unknown": 10,
+    "missing_document": 10,
+    "unknown_documents": 10,
+    "wrong_order": 10,
+    "emergency": 10,
+    "r1_r2": 10,
+    "r2_r3": 10,
+    "r1_r3": 10,
+    "missing_payment": 10,
+    "same_day": 10,
+    "overpayment": 10,
+    "missing_date": 10,
+    "all_unknown": 10,
+    "unknown_exemption_code": 10,
+    "confirmed_zero": 10,
+    "emergency_partial": 10
+  }
+}

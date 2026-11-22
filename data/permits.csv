@@ -1,0 +1,3 @@
+﻿case_id;case_type;application_date;issued_date;predecision_date;documents;documents_complete;accrued_amount;paid_amount;exemption_code;exemption_proof;comment
+SYN-PB-001;standard;2026-11-16;2026-11-18;2026-11-20;Заявление;yes;2500.00;1200.00;;unknown;Контрольное дело с тремя отклонениями
+SYN-PB-002;emergency;2026-11-16;2026-11-19;;Заявление|Акт обследования;yes;;;;unknown;Аварийная категория

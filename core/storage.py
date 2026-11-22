@@ -518,7 +518,7 @@ def save_review(case_id: str, decision: str, note: str) -> None:
 def _current_review(connection, case_id):
     row = connection.execute("""
         SELECT r.decision,r.note,r.reviewed_at FROM review_history r JOIN cases c USING(case_id,version)
-        WHERE r.case_id=? AND r.reviewed_at >= COALESCE((
+        WHERE r.case_id=? AND r.reviewed_at > COALESCE((
             SELECT MAX(e.occurred_at) FROM case_workflow_events e
             WHERE e.case_id=c.case_id AND e.version=c.version AND e.from_state='closed'
         ), '') ORDER BY r.id DESC LIMIT 1

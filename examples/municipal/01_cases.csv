@@ -1,0 +1,5 @@
+case_id;case_type;application_date;issued_date;predecision_date;documents;documents_complete;accrued_amount;paid_amount;exemption_code;exemption_proof;comment;permit_stage;charge_id;permit_act_number;permit_site;permit_trees
+МУН-001;standard;2026-11-16;;2026-11-17;Заявление|Акт обследования;yes;2500;;;unknown;Учебный проект билета;pre_issue;0000901;А-18;УЧ-07;12
+МУН-002;standard;2026-11-16;2026-11-18;2026-11-20;Заявление;yes;1000;600;;unknown;Учебный выданный билет;issued;0000902;А-19;УЧ-08;4
+МУН-003;standard;2026-11-16;;;Заявление;unknown;700;;;unknown;Этап и оплата уточняются;unknown;0000903;;;
+МУН-004;emergency;2026-11-16;;;Заявление|Акт обследования;yes;;;;unknown;Модельная освобождённая категория;pre_issue;;;;

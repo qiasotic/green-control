@@ -9,6 +9,8 @@ import pandas as pd
 import streamlit as st
 
 from core import storage
+from core.municipal import STAGES, stage
+from ui import municipal
 from core.presentation import (
     RULE_LABELS, case_label, category_label, comparison_evidence, comparison_text, evidence_rows,
     model_text, profile_label, source_label,
@@ -84,6 +86,13 @@ def _general(values, profile, prefix, editing):
         values["application_date"] = _date_input("Дата заявления", values.get("application_date"),
                                                 prefix + "application_date")
         values["issued_date"] = _date_input("Дата выдачи", values.get("issued_date"), prefix + "issued_date")
+        if values["issued_date"]:
+            values["permit_stage"] = "issued"
+            st.caption("По дате выдачи дело относится к выданным билетам.")
+        else:
+            stages = ["unknown", "pre_issue", "issued"]
+            values["permit_stage"] = st.selectbox("Этап выдачи", stages, index=stages.index(stage(values)),
+                                                  format_func=STAGES.get, key=prefix + "stage")
     hint("form_comment")
     values["comment"] = st.text_area("Комментарий к делу", values.get("comment", ""), max_chars=1000,
                                      height=88, key=prefix + "comment")
@@ -91,6 +100,7 @@ def _general(values, profile, prefix, editing):
 
 def _documents(values, profile, prefix):
     hint("form_documents")
+    municipal.document_fields(values, prefix)
     kind = profile["case_types"].get(values.get("case_type"), {})
     required = kind.get("required_documents", [])
     documents = set(values.get("documents", []))
@@ -125,6 +135,9 @@ def _documents(values, profile, prefix):
 
 def _finance(values, profile, prefix):
     hint("form_finance")
+    values["charge_id"] = st.text_input("Номер начисления", value=values.get("charge_id", ""),
+                                        help="Точный номер из выписки бухгалтерии, включая начальные нули.",
+                                        key=prefix + "charge_id", max_chars=100)
     scenarios = list(FINANCE)
     previous = values["finance_mode"]
     selected = st.radio("Финансовый сценарий", scenarios, index=scenarios.index(previous),
@@ -423,8 +436,48 @@ def _workflow(case, current):
             st.rerun()
 
 
+def _compare_revisions(versions, analyses, profile):
+    newer, older = versions[:2]
+    before, after = (card_fields(entry["payload"], profile) for entry in (older, newer))
+    columns = ("Поле", f"Редакция {older['version']}", f"Редакция {newer['version']}")
+    changes = [
+        (field, before.get(field, "—"), after.get(field, "—"))
+        for field in dict.fromkeys([*before, *after])
+        if before.get(field) != after.get(field)
+    ]
+    st.markdown("**Изменения в сведениях**")
+    if changes:
+        st.dataframe(pd.DataFrame(changes, columns=columns), hide_index=True)
+    else:
+        st.caption("Значения полей совпадают.")
+
+    older_runs = {
+        (run["profile_id"], run["profile_version"]): run for run in analyses if run["version"] == older["version"]
+    }
+    for run in analyses:
+        profile_key = (run["profile_id"], run["profile_version"])
+        if run["version"] != newer["version"] or profile_key not in older_runs:
+            continue
+        previous = {item["rule"]: item["status"] for item in older_runs[profile_key]["outcomes"]}
+        statuses = []
+        for item in run["outcomes"]:
+            rule, status = item["rule"], item["status"]
+            old_status = previous.get(rule)
+            statuses.append((rule + " · " + RULE_LABELS[rule], STATUS_LABELS.get(old_status, "—"),
+                             STATUS_LABELS[status], "Изменился" if old_status != status else "Совпадает"))
+        st.markdown("**Результаты проверок**")
+        st.caption(f"Общий профиль расчёта: {profile_key[0]} · {profile_label(profile_key[1])}")
+        st.dataframe(pd.DataFrame(statuses, columns=("Проверка", *columns[1:], "Статус")), hide_index=True)
+        break
+    else:
+        st.caption("Для этих редакций нет сохранённых расчётов по одной версии профиля.")
+
+
 def _history(case, data, profile):
     hint("case_history")
+    if len(data["versions"]) >= 2:
+        with st.expander("Что изменилось · две последние редакции", expanded=True):
+            _compare_revisions(data["versions"], data["analyses"], profile)
     columns = ["Время (МСК)", "Ревизия", "Событие", "Комментарий", "Инициатор"]
     events = []
     for name, time_key, event_key, note_key in (
@@ -526,9 +579,15 @@ def case_page(cases, profile):
         return
     if not data["current_review"]["reviewed_at"] and (case["_prior_review"] or data["reviews"]):
         st.info("Требуется повторная проверка. Прежнее заключение доступно в истории.")
-    analysis, review, history, inputs = st.tabs(("Результаты проверок", "Рассмотрение и заключение", "История", "Сведения дела"))
+    analysis, municipal_tab, review, history, inputs = st.tabs(("Результаты проверок", "Подготовка и сверка",
+                                              "Рассмотрение и заключение", "История", "Сведения дела"),
+                                              key="case_tabs", on_change="rerun")
     with analysis:
+        if stage(case) == "pre_issue":
+            st.info("Билет готовится к выдаче. Ниже показаны условия по текущим сведениям. До регистрации билета ожидание оплаты и незаполненная дата выдачи могут быть обычными этапами работы. Следующие действия собраны во вкладке «Подготовка и сверка».")
         _render_analysis(case, profile, data)
+    with municipal_tab:
+        municipal.case_panel(case, profile)
     with review:
         _workflow(case, data["current_review"])
     with history:

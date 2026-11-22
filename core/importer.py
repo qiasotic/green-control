@@ -14,6 +14,7 @@ import pandas as pd
 from openpyxl.utils.exceptions import InvalidFileException
 
 from core.models import CASE_COLUMNS, OPTIONAL_CASE_COLUMNS, normalize_case
+from core.municipal import FIELDS
 from core.presentation import ENUM_LABELS, FIELD_LABELS, category_label, case_label
 from core.storage import save_cases
 
@@ -129,33 +130,41 @@ def mapped_rows(frame, mapping, profile):
     return records, errors
 
 
-def read_cases(source, filename: str, profile: dict) -> list[dict]:
+def inspect_cases(source, filename: str, profile: dict):
     """Импорт стандартной выгрузки с сохранением совместимости колонок."""
     frame = read_frame(source, filename)
     mapping = {}
-    for column in [*CASE_COLUMNS, *OPTIONAL_CASE_COLUMNS]:
+    labels = {**FIELD_LABELS, **FIELDS}
+    for column in [*CASE_COLUMNS, *OPTIONAL_CASE_COLUMNS, *FIELDS]:
         if column in frame.columns:
             mapping[column] = column
-        elif FIELD_LABELS[column] in frame.columns:
-            mapping[column] = FIELD_LABELS[column]
+        elif labels[column] in frame.columns:
+            mapping[column] = labels[column]
     missing = [column for column in CASE_COLUMNS if column not in mapping]
     if missing:
         raise ValueError("В выгрузке нет колонок: " + ", ".join(FIELD_LABELS[column] for column in missing))
     records, errors = mapped_rows(frame, mapping, profile)
+    return [normalize_case(row, profile) for row in records], errors
+
+
+def read_cases(source, filename: str, profile: dict) -> list[dict]:
+    """Импорт стандартной выгрузки с сохранением совместимости колонок."""
+    records, errors = inspect_cases(source, filename, profile)
     if errors:
         number, message = errors[0]
         raise ValueError(f"Строка {number}: {message}")
-    return [normalize_case(row, profile) for row in records]
+    return records
 
 
 def empty_template_bytes(*, localized=False) -> bytes:
-    columns = [*CASE_COLUMNS, *OPTIONAL_CASE_COLUMNS]
+    labels = {**FIELD_LABELS, **FIELDS}
+    columns = [*CASE_COLUMNS, *OPTIONAL_CASE_COLUMNS, *FIELDS]
     buffer = BytesIO()
     if not localized:
         pd.DataFrame(columns=columns).to_excel(buffer, index=False, engine="openpyxl")
     else:
         with pd.ExcelWriter(buffer, engine="openpyxl") as book:
-            pd.DataFrame(columns=[FIELD_LABELS[key] for key in columns]).to_excel(
+            pd.DataFrame(columns=[labels[key] for key in columns]).to_excel(
                 book, sheet_name="Разрешительные дела", index=False)
             pd.DataFrame([
                 ("Категория", "Общая процедура или Аварийные работы"),

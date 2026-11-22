@@ -13,10 +13,12 @@ from core.presentation import (
     RULE_LABELS, activity_label, case_label, category_label, date_text, model_text, profile_label, public_row, source_label,
 )
 from ui import github
+from ui import municipal
 from ui.training import hint, sidebar as hints_switch
 from core.analytics import LIMITATION, RULES, priority as _priority, report_sheets, summarize, summary_csv, summary_html
-from core.importer import INBOX, empty_template_bytes, read_cases, sync_folder
+from core.importer import INBOX, empty_template_bytes, inspect_cases, read_cases, sync_folder
 from core.models import load_profile
+from core.municipal import stage
 from core.reports import card_fields, conclusion_text, csv_bytes, filename_id, history_sheets, xlsx_bytes
 from ui.casework import case_page, editor, selected_case
 from ui.components import (
@@ -141,11 +143,13 @@ def _home(entries, profile):
     upload.button("Загрузить данные", on_click=route, args=("Импорт из ИС",))
     hint("home_metrics")
     _metrics(summarize(entries)["metrics"])
+    municipal.queue(entries, profile)
     st.subheader("Приоритетная очередь")
+    st.caption("Выданные билеты и дела с неуточнённым этапом. Подготовка проектов отражена в задачах по выдаче.")
     hint("home_queue")
     queue = [
         (case, row) for case, row in sorted(entries, key=_priority)
-        if case["_state"] != "closed" and not case["_draft"]
+        if case["_state"] != "closed" and not case["_draft"] and stage(case) != "pre_issue"
         and (row["Сигналы"] or row["Нехватка сведений"])
     ]
     if not entries:
@@ -503,6 +507,7 @@ def _reports(entries, profile):
     }.items())
     sheets = [("Карточка и заключение", overview, ["Поле", "Значение"])]
     sheets.extend(history_sheets(data, profile))
+    sheets.extend(municipal.report_sheets(case, profile))
     right.download_button("Скачать заключение XLSX", xlsx_bytes(sheets), file_stub + ".xlsx", XLSX_MIME)
     st.divider()
     _summary_report(entries, profile)
@@ -544,9 +549,16 @@ def _method(entries, profile):
 
 
 def _import(entries, profile):
-    files, remote, removal = st.tabs(("Файловый импорт", "Подключение к GitHub", "Удаление наборов"))
+    files, pay, acts, remote, removal = st.tabs(("Файловый импорт", "Платежи", "Акты обследования",
+                                               "Подключение к GitHub", "Удаление наборов"),
+                                              key="import_tabs", on_change="rerun")
     with files:
         _file_import(entries, profile)
+    cases = [c for c, _ in entries]
+    with pay:
+        municipal.payment_panel(cases, profile)
+    with acts:
+        municipal.act_panel(cases, profile)
     with remote:
         github.panel(profile)
     with removal:
@@ -594,9 +606,33 @@ def _file_import(entries, profile):
     st.subheader("Загрузка файла")
     hint("file_upload")
     uploaded = st.file_uploader("Выберите выгрузку", type=["csv", "xlsx"])
-    if st.button("Импортировать файл", type="primary", disabled=uploaded is None):
+    records = []
+    errors = []
+    if uploaded is not None:
         try:
-            records = read_cases(uploaded, uploaded.name, profile)
+            records, errors = inspect_cases(uploaded, uploaded.name, profile)
+        except (ValueError, OSError) as exc:
+            st.error(literal(str(exc)))
+        else:
+            st.markdown("**Проверка перед импортом**")
+            st.caption(f"Строк в файле: {len(records) + len(errors)} · Прошли проверку: {len(records)} · С ошибками: {len(errors)}")
+            if errors:
+                st.error("Исправьте выгрузку и загрузите её повторно.")
+                st.dataframe(pd.DataFrame(errors, columns=["Строка", "Причина"]), hide_index=True)
+            if records:
+                existing = {case["case_id"] for case, _ in entries}
+                st.caption(f"Номеров, уже имеющихся в реестре: {sum(case['case_id'] in existing for case in records)}")
+                st.caption(f"Первые {min(len(records), 10)} карточек, прошедших проверку.")
+                preview = [{
+                    "Номер дела": case_label(case["case_id"]),
+                    "Категория": category_label(case["case_type"], profile),
+                    "Дата заявления": date_text(case["application_date"]),
+                    "Дата выдачи": date_text(case["issued_date"]),
+                } for case in records[:10]]
+                st.dataframe(pd.DataFrame(preview), hide_index=True)
+    if st.button("Импортировать файл", key="file_import_commit", type="primary",
+                 disabled=not records or bool(errors)):
+        try:
             changed = storage.save_cases(records, f"Импорт: {uploaded.name}", profile=profile, update_existing=update)
         except (ValueError, OSError, SQLiteError) as exc:
             st.error(literal(exc))
@@ -693,6 +729,9 @@ def main():
     st.title(page or "Рабочее место")
     st.caption(description)
     notice = st.session_state.pop("notice", None)
+    error = st.session_state.pop("municipal_error", None)
+    if error:
+        st.error(literal(error))
     if notice:
         st.success(notice)
     if page == "Анализ и проверка":

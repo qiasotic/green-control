@@ -8,6 +8,7 @@ import math
 import re
 
 from core.presentation import case_label
+from core.municipal import FIELDS, clean_field
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PROFILE_PATH = PROJECT_ROOT / "config" / "rules_demo.json"
@@ -130,4 +131,10 @@ def normalize_case(raw: dict, profile: dict) -> dict:
         result["finance_mode"] = finance_mode
     if comments["payment_note"] and finance_mode in ("", "payment"):
         result["payment_note"] = comments["payment_note"]
+    for key in FIELDS:
+        value = clean_field(key, raw.get(key))
+        if value != "":
+            result[key] = value
+    if result.get("permit_stage") and result["issued_date"]:
+        result["permit_stage"] = "issued"
     return result

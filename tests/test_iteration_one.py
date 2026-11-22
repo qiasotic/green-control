@@ -57,7 +57,7 @@ def test_v14_schema_migrates_without_rewriting_original_payload_or_losing_review
     with sqlite3.connect(isolated_db) as conn:
         assert conn.execute("SELECT payload FROM cases").fetchone()[0] == original
         assert conn.execute("SELECT COUNT(*) FROM reviews").fetchone() == (1,)
-        assert conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall() == [(1,), (2,), (3,)]
+        assert conn.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall() == [(1,), (2,), (3,), (4,)]
         assert not conn.execute("PRAGMA foreign_key_check").fetchall()
 
 

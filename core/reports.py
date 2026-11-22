@@ -14,9 +14,16 @@ from core.presentation import (
     source_label, timestamp,
 )
 
+from core.municipal import FIELDS, STAGES
+
+
 def card_fields(case, profile):
-    return {label: field_value(field, case_comment(case) if field == "comment" else case.get(field), profile) for field, label in FIELD_LABELS.items()
+    fields = {label: field_value(field, case_comment(case) if field == "comment" else case.get(field), profile) for field, label in FIELD_LABELS.items()
             if field in case or field not in ("finance_mode", "payment_note")}
+    for key, label in FIELDS.items():
+        if key in case:
+            fields[label] = STAGES.get(case[key], case[key]) if key == "permit_stage" else case[key]
+    return fields
 
 
 def filename_id(case_id):

@@ -11,6 +11,7 @@ import sqlite3
 from core.guidance import build_review_plan
 from core.models import CONTROL_CHARACTERS, load_profile, normalize_case
 from core.rules import analyze_case
+from core.municipal import FIELDS
 from core.presentation import case_label
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -188,6 +189,15 @@ def initialize(profile=None) -> None:
                 UNIQUE (repository,path,ref,digest)
             )""")
             connection.execute("INSERT INTO schema_migrations VALUES (3,?)", (now,))
+        if connection.execute("SELECT 1 FROM schema_migrations WHERE version=4").fetchone() is None:
+            connection.execute("""CREATE TABLE payment_batches (
+                id INTEGER PRIMARY KEY, as_of TEXT NOT NULL UNIQUE, source TEXT NOT NULL,
+                digest TEXT NOT NULL, saved_at TEXT NOT NULL)""")
+            connection.execute("""CREATE TABLE payment_results (
+                id INTEGER PRIMARY KEY, batch_id INTEGER NOT NULL REFERENCES payment_batches(id) ON DELETE CASCADE,
+                case_id TEXT REFERENCES cases(case_id) ON DELETE CASCADE, result TEXT NOT NULL,
+                UNIQUE(batch_id,case_id))""")
+            connection.execute("INSERT INTO schema_migrations VALUES (4,?)", (now,))
         pending = connection.execute("""
             SELECT c.case_id,c.version,c.payload FROM cases c
             LEFT JOIN analysis_runs a ON a.case_id=c.case_id AND a.version=c.version
@@ -221,7 +231,8 @@ def _transition(connection, row, state, note, now):
     """, (row["case_id"], row["version"], row["state"], state, note, now, ACTOR))
 
 
-def _write_case(connection, raw, source, profile, now, *, mode, draft=False, expected_version=None):
+def _write_case(connection, raw, source, profile, now, *, mode, draft=False, expected_version=None,
+                revision_event=None):
     case_id = str(raw["case_id"]).strip()
     prior = connection.execute("SELECT * FROM cases WHERE case_id=?", (case_id,)).fetchone()
     if mode == "edit":
@@ -234,6 +245,12 @@ def _write_case(connection, raw, source, profile, now, *, mode, draft=False, exp
         raise ValueError("Укажите дату заявления для завершения ввода или сохраните черновик.")
     if prior is not None:
         original = json.loads(prior["payload"])
+        # An older file can update a case without supplying the municipal fields.
+        for key in FIELDS:
+            if key not in raw and key in original:
+                candidate[key] = original[key]
+        if candidate.get("permit_stage") and candidate.get("issued_date"):
+            candidate["permit_stage"] = "issued"
         try:
             comparable = normalize_case(original, profile)
         except ValueError:
@@ -245,7 +262,7 @@ def _write_case(connection, raw, source, profile, now, *, mode, draft=False, exp
             raise ValueError(f"Дело «{case_label(case_id)}» уже есть и содержит другие сведения. "
                              "Для замены подтвердите обновление существующих дел.")
         from_original = {key: value for key, value in original.items()
-                         if key not in ("finance_mode", "payment_note")}
+                         if key not in ("finance_mode", "payment_note") and key not in FIELDS}
         candidate = {**from_original, **candidate}
         if mode == "edit":
             source = prior["source"]
@@ -268,7 +285,7 @@ def _write_case(connection, raw, source, profile, now, *, mode, draft=False, exp
     connection.execute("""
         INSERT INTO case_versions(case_id,version,payload,source,is_draft,event,occurred_at,actor)
         VALUES (?,?,?,?,?,?,?,?)
-    """, (case_id, version, payload, source, int(draft), event, now, ACTOR))
+    """, (case_id, version, payload, source, int(draft), revision_event or event, now, ACTOR))
     if prior is None or state in ("awaiting_info", "closed"):
         connection.execute("""
             INSERT INTO case_workflow_events

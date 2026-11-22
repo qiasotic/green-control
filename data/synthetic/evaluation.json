@@ -1,0 +1,185 @@
+{
+  "count": 200,
+  "deterministic": true,
+  "rules": {
+    "R1": {
+      "TP": 50,
+      "FP": 0,
+      "FN": 0,
+      "TN": 110,
+      "precision": 1.0,
+      "recall": 1.0,
+      "applicable": 200,
+      "covered": 160,
+      "coverage": 0.8,
+      "binary_pairs": 160,
+      "nonbinary_pairs": 40,
+      "four_status_matches": 200,
+      "four_status_agreement": 1.0,
+      "reference_counts": {
+        "FLAG": 50,
+        "PASS": 110,
+        "NEED_DATA": 40,
+        "NOT_APPLICABLE": 0
+      },
+      "prediction_counts": {
+        "FLAG": 50,
+        "PASS": 110,
+        "NEED_DATA": 40,
+        "NOT_APPLICABLE": 0
+      },
+      "matrix": {
+        "FLAG": {
+          "FLAG": 50,
+          "PASS": 0,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        },
+        "PASS": {
+          "FLAG": 0,
+          "PASS": 110,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        },
+        "NEED_DATA": {
+          "FLAG": 0,
+          "PASS": 0,
+          "NEED_DATA": 40,
+          "NOT_APPLICABLE": 0
+        },
+        "NOT_APPLICABLE": {
+          "FLAG": 0,
+          "PASS": 0,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        }
+      }
+    },
+    "R2": {
+      "TP": 30,
+      "FP": 0,
+      "FN": 0,
+      "TN": 140,
+      "precision": 1.0,
+      "recall": 1.0,
+      "applicable": 200,
+      "covered": 170,
+      "coverage": 0.85,
+      "binary_pairs": 170,
+      "nonbinary_pairs": 30,
+      "four_status_matches": 200,
+      "four_status_agreement": 1.0,
+      "reference_counts": {
+        "FLAG": 30,
+        "PASS": 140,
+        "NEED_DATA": 30,
+        "NOT_APPLICABLE": 0
+      },
+      "prediction_counts": {
+        "FLAG": 30,
+        "PASS": 140,
+        "NEED_DATA": 30,
+        "NOT_APPLICABLE": 0
+      },
+      "matrix": {
+        "FLAG": {
+          "FLAG": 30,
+          "PASS": 0,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        },
+        "PASS": {
+          "FLAG": 0,
+          "PASS": 140,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        },
+        "NEED_DATA": {
+          "FLAG": 0,
+          "PASS": 0,
+          "NEED_DATA": 30,
+          "NOT_APPLICABLE": 0
+        },
+        "NOT_APPLICABLE": {
+          "FLAG": 0,
+          "PASS": 0,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        }
+      }
+    },
+    "R3": {
+      "TP": 30,
+      "FP": 0,
+      "FN": 0,
+      "TN": 130,
+      "precision": 1.0,
+      "recall": 1.0,
+      "applicable": 180,
+      "covered": 160,
+      "coverage": 0.8888888888888888,
+      "binary_pairs": 160,
+      "nonbinary_pairs": 40,
+      "four_status_matches": 200,
+      "four_status_agreement": 1.0,
+      "reference_counts": {
+        "FLAG": 30,
+        "PASS": 130,
+        "NEED_DATA": 20,
+        "NOT_APPLICABLE": 20
+      },
+      "prediction_counts": {
+        "FLAG": 30,
+        "PASS": 130,
+        "NEED_DATA": 20,
+        "NOT_APPLICABLE": 20
+      },
+      "matrix": {
+        "FLAG": {
+          "FLAG": 30,
+          "PASS": 0,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        },
+        "PASS": {
+          "FLAG": 0,
+          "PASS": 130,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 0
+        },
+        "NEED_DATA": {
+          "FLAG": 0,
+          "PASS": 0,
+          "NEED_DATA": 20,
+          "NOT_APPLICABLE": 0
+        },
+        "NOT_APPLICABLE": {
+          "FLAG": 0,
+          "PASS": 0,
+          "NEED_DATA": 0,
+          "NOT_APPLICABLE": 20
+        }
+      }
+    }
+  },
+  "mismatches": [],
+  "profile_id": "DEMO-2026-01",
+  "profile_version": "1.0",
+  "seed": 20261120,
+  "measured_at": "2026-11-20T15:02:13+00:00",
+  "benchmark": {
+    "median_ms": {
+      "1": 0.004600000465870835,
+      "100": 0.4109999999855063,
+      "200": 0.8353000002898625
+    },
+    "repeats": 7,
+    "machine": {
+      "os": "Windows-11-10.0.26200-SP0",
+      "cpu": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+      "logical_cpus": 12,
+      "python": "3.14.5"
+    }
+  },
+  "limitation": "Измерение проверяет согласованность модельных правил с заданными сценариями. Эффективность в реальной ведомственной эксплуатации здесь не оценивалась."
+}

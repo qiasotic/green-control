@@ -1,0 +1,3 @@
+﻿case_id;case_type;application_date;issued_date;predecision_date;documents;documents_complete;accrued_amount;paid_amount;exemption_code;exemption_proof;comment;finance_mode;payment_note
+SYN-20261120-0001;standard;2026-07-23;2026-07-27;2026-07-26;Заявление|Акт обследования;yes;2140;2140;;unknown;Синтетический сценарий · Полная оплата;payment;
+SYN-20261120-0001;standard;2026-07-23;2026-07-27;2026-07-26;Заявление|Акт обследования;yes;2140;2140;;unknown;Синтетический сценарий · Полная оплата;payment;

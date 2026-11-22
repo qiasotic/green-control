@@ -1,0 +1,15 @@
+# Local runtime data
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+!data/synthetic/green_control_demo.sqlite3
+.DS_Store
+.streamlit/secrets.toml
+incoming/*.csv
+incoming/*.xlsx
+incoming/processed/*
+!incoming/processed/.gitkeep

@@ -1,0 +1,10 @@
+# DEVELOPMENT ONLY. Intentionally bound to localhost; no authentication.
+services:
+  green-control:
+    build: .
+    ports:
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./incoming:/app/incoming
+    restart: "no"

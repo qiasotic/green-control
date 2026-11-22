@@ -1,0 +1,4 @@
+﻿case_id;case_type;application_date;issued_date;predecision_date;documents;documents_complete;accrued_amount;paid_amount;exemption_code;exemption_proof;comment
+DEMO-OK-001;standard;2026-11-16;2026-11-19;2026-11-18;Заявление|Акт обследования;yes;1500;1500;;unknown;Учебный тест: все проверки проходят
+DEMO-FLAG-002;standard;2026-11-16;2026-11-18;2026-11-20;Заявление;yes;2500;1200;;unknown;Учебный тест: три сигнала
+DEMO-NODATA-003;standard;2026-11-16;2026-11-18;;;unknown;;;;unknown;Учебный тест: данных недостаточно

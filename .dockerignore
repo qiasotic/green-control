@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.git/
+data/*
+incoming/*
+!data/.gitkeep
+!data/synthetic/
+!data/synthetic/**
+data/synthetic/*.sqlite3
+data/synthetic/*.sqlite3-*
+!incoming/.gitkeep
